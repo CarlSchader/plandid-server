@@ -1,11 +1,14 @@
-This is an example json. remove the -example in config-example.json and add valid entries to build a valid config.json
+/*
+* This is an example json. remove the -example in config-example.json, add valid entries, and remove comments to build a valid config.json
+*/
 {
     "appName": "Plandid",
     "url": "http://example.com",
-    "clientBuildPath": "../path",
-    "sslCertificatePath": "../path",
-    "sslKeyPath": "../path",
     "port": 80,
+    "clientBuildPath": "../path",
+    "isHttps": false,
+    "sslCertificatePath": "../path", // only necessary if isHttps is true
+    "sslKeyPath": "../path", // only necessary if isHttps is true
     "sessionSecret": "random string",
     "mongodbConfig": {
 		"username": "mdbUsername",

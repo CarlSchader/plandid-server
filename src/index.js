@@ -11,11 +11,6 @@
 
     const config = JSON.parse(fs.readFileSync("./config.json"));
 
-    // const httpsOptions = {
-    //     key: fs.readFileSync(config.sslKeyPath),
-    //     cert: fs.readFileSync(config.sslCertificatePath)
-    // };
-
     // Connect to database
     await db.connect();
 
@@ -106,8 +101,16 @@
         });
     });
 
-    // https.createServer(httpsOptions, app).listen(config.port);
-    http.createServer(app).listen(config.port);
+    if (config.isHttps) {
+        const httpsOptions = {
+            key: fs.readFileSync(config.sslKeyPath),
+            cert: fs.readFileSync(config.sslCertificatePath)
+        };
+        https.createServer(httpsOptions, app).listen(config.port);
+    }
+    else {
+        http.createServer(app).listen(config.port);
+    }
 
     console.log(`${config.appName} Web Server running on port: ${config.port}`);
 })();
