@@ -2,9 +2,13 @@ const express = require('express');
 const { DateTime } = require('luxon');
 const db = require('../database')
 const { planDays, binaryIndexSearch } = require('../algorithm');
-const { lookBackMillis, tiers } = require('../config');
+// const { lookBackMillis, tiers } = require('../config');
 const { localDate } = require('../utilities');
 const router = express.Router();
+
+const config = JSON.parse(fs.readFileSync("../../config.json"));
+const lookBackMillis = config.lookBackMillis;
+const tiers = config.tiers;
 
 // Cuts old plans before storageMillis, returns oldPlans after lookBackMillis
 function managePlans(plans, utcStart, lookBackMillis, storageMillis) {

@@ -1,8 +1,9 @@
 const { MongoClient } = require('mongodb');
-const { mongodbConfig } = require('./config');
+const config = JSON.parse(fs.readFileSync("../config.json"));
 const { rangeMerge, overlapSearch } = require('./algorithm');
 const { makeID, sortRangedObjectArray } = require('./utilities');
 
+const mongodbConfig = config.mongodbConfig;
 const names = mongodbConfig.collectionNames;
 
 const client = new MongoClient(mongodbConfig.uri, {useNewUrlParser: true, useUnifiedTopology: true});

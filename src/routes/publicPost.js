@@ -1,7 +1,13 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
-const {emailConfig, appName, url, freeTierName} = require('../config');
+// const {emailConfig, appName, url, freeTierName} = require('../config');
 const db = require('../database');
+
+const config = JSON.parse(fs.readFileSync("../../config.json"));
+const emailConfig = config.emailConfig;
+const appName = config.appName;
+const url = config.url;
+const freeTierName = config.freeTierName;
 
 const router = express.Router();
 
