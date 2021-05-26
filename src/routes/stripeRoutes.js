@@ -1,8 +1,8 @@
 const express = require('express');
-// const config = require("../config");
+const fs = require("fs");
 const db = require("../database");
 
-const config = JSON.parse(fs.readFileSync("../../config.json"));
+const config = JSON.parse(fs.readFileSync("./config.json"));
 
 const router = express.Router();
 

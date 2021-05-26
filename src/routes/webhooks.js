@@ -3,8 +3,9 @@ const bodyParser = require("body-parser");
 const {invert} = require("../utilities");
 const db = require("../database");
 const router = express.Router();
+const fs = require("fs");
 
-const config = JSON.parse(fs.readFileSync("../../config.json"));
+const config = JSON.parse(fs.readFileSync("./config.json"));
 
 const stripe = require('stripe')(config.stripe.privateKey);
 const webhookSecret = config.stripe.webhookSecret;

@@ -7,10 +7,9 @@
     const bodyParser = require("body-parser");
     const cors = require('cors');
     const session = require('express-session');
-    // const config = require('./config');
     const db = require('./database');
 
-    const config = JSON.parse(fs.readFileSync("../config.json"));
+    const config = JSON.parse(fs.readFileSync("./config.json"));
 
     // const httpsOptions = {
     //     key: fs.readFileSync(config.sslKeyPath),

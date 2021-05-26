@@ -1,12 +1,12 @@
 const express = require('express');
 const { DateTime } = require('luxon');
-const db = require('../database')
+const db = require('../database');
+const fs = require("fs");
 const { planDays, binaryIndexSearch } = require('../algorithm');
-// const { lookBackMillis, tiers } = require('../config');
 const { localDate } = require('../utilities');
 const router = express.Router();
 
-const config = JSON.parse(fs.readFileSync("../../config.json"));
+const config = JSON.parse(fs.readFileSync("./config.json"));
 const lookBackMillis = config.lookBackMillis;
 const tiers = config.tiers;
 

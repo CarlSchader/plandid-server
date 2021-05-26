@@ -1,9 +1,9 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
-// const {emailConfig, appName, url, freeTierName} = require('../config');
+const fs = require("fs");
 const db = require('../database');
 
-const config = JSON.parse(fs.readFileSync("../../config.json"));
+const config = JSON.parse(fs.readFileSync("./config.json"));
 const emailConfig = config.emailConfig;
 const appName = config.appName;
 const url = config.url;
