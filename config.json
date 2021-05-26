@@ -1,7 +1,7 @@
 {
     "appName": "Plandid",
     "url": "http://carlschader.com",
-    "clientBuildPath": "./client-build/",
+    "clientBuildPath": "/home/carl/programming/Plandid/plandid-server/client-build",
     "sslCertificatePath": "/etc/letsencrypt/live/plandid.app/fullchain.pem",
     "sslKeyPath": "/etc/letsencrypt/live/plandid.app/privkey.pem",
     "port": 80,

@@ -95,13 +95,13 @@
 
     // All GET Routes are public
     app.get('/', function(req, res) {
-        return res.sendFile(config.indexHTMLPath);
+        return res.sendFile(path.join(config.clientBuildPath, "index.html"));
     });
 
     app.get('*', function(req, res) {
         res.sendFile(path.join(config.clientBuildPath, req.url), function(error) {
             if (error) {
-                return res.sendFile(config.indexHTMLPath);
+                return res.sendFile(path.join(config.clientBuildPath, "index.html"));
             }
         });
     });
