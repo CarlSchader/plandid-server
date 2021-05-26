@@ -1,0 +1,59 @@
+This is an example json. remove the -example in config-example.json and add valid entries to build a valid config.json
+{
+    "appName": "Plandid",
+    "url": "http://example.com",
+    "clientBuildPath": "../path",
+    "sslCertificatePath": "../path",
+    "sslKeyPath": "../path",
+    "port": 80,
+    "sessionSecret": "random string",
+    "mongodbConfig": {
+		"username": "mdbUsername",
+		"password": "mdbPassword",
+		"uri": "http://mdbinstance.com",
+        "databaseName": "dbName",
+        "idLength": 24,
+        "collectionNames": {
+            "userData": "UserData",
+            "emailValidation": "EmailValidation",
+            "schedule": "Schedule",
+            "people": "People",
+            "categories": "Categories",
+            "events": "Events",
+            "plans": "Plans",
+            "online": "Online",
+            "stripe": "Stripe"
+        }
+    },
+
+    "stripe": {
+        "privateKey": "stripe key",
+        "priceKeys": {
+            "free": null,
+            "premium": "stripe price key"
+        },
+        "webhookSecret": "stripe webhook secret"
+    },
+
+    "emailConfig": {
+        "service": "gmail",
+        "address": "example@gmail.com",
+        "password": "random string"
+    },
+
+    "lookBackMillis": 1209600000,
+
+    "freeTierName": "free",
+    "tiers": {
+        "free": {
+            "price": 0.0,
+            "forwardMillis": 2678400000,
+            "storageMillis": 1209600000
+        },
+        "premium": {
+            "price": 9.99,
+            "forwardMillis": 2678400000,
+            "storageMillis": 31536000000
+        }
+    }
+}
