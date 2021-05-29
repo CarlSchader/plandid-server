@@ -76,7 +76,6 @@ router.post("/login", async function(req, res) {
     let userData = await db.readUserDataRecord(req.body.email, req.body.password);
     if (userData !== null) {
         req.session.sessionID = await db.createOnlineRecord(userData.userID);
-        req.session.save();
         return res.json(0);
     }
     else {

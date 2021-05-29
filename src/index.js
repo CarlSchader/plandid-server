@@ -17,37 +17,45 @@
     app = express();
 
     // Middleware
-    app.use(cors({
-        origin: true,
-        credentials: true
-    })); // These cors options are necessary to recieve cookies from axios.
 
-    // // Custom CORS (not working)
-    // app.options("/*", function(req, res, next){
-    //     res.header('Access-Control-Expose-Headers', 'ETAG');
-    //     res.header('Access-Control-Allow-Credentials', 'true');
-    //     res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-    //     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-    //     res.header('Access-Control-Allow-Headers', '*');
-    //     res.sendStatus(200);
-    //   });
+    // CORS Module
+    const corsOptions = {
+        origin: function(origin, callback) {
+            if (config.corsWhitelist.indexOf(origin) !== -1 || !origin) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error(`${origin}: Not allowed by CORS`));
+            }
+        },
+        credentials: true,
+        maxAge: 86400,
+        optionsSuccessStatus: 200
+    };
+
+    app.use(cors(corsOptions));
     
     // Webhooks go here. (notice this is before bodyParser.)
     app.use("/webhooks", require("./routes/webhooks"));
     
     app.use(bodyParser.json());
     app.use(express.urlencoded({extended: false}));
+
+    // Cookies for remembering session
+    // app.set("trust proxy", 1);
     app.use(session({
         secret: config.sessionSecret,
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: false,
-        maxAge: 6 * 60 * 60 * 1000,
-        sameSite: 'lax'
+        cookie: { 
+            secure: config.isHttps,
+            maxAge: 21600000, // 6 hours
+            sameSite: true,
+            httpOnly: true
         }
     }));
     
-    ///// FOR DEVELOPMENT REMOVE IN PRODUCTION
+    ///// FOR DEVELOPMENT, REMOVE WHEN IN PRODUCTION
     app.use((req, res, next) => {
         console.log(req.originalUrl);
         next();
@@ -55,6 +63,8 @@
     /////
 
     // Routes
+
+    app.options('*', cors(corsOptions));
 
     // Public POST Routes
     app.use('/publicPost', require('./routes/publicPost'));

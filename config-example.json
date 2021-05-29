@@ -10,6 +10,8 @@
     "sslCertificatePath": "../path", // only necessary if isHttps is true
     "sslKeyPath": "../path", // only necessary if isHttps is true
     "sessionSecret": "random string",
+    "corsWhitelist": ["http://example.com", "http://localhost:devport"],
+
     "mongodbConfig": {
 		"username": "mdbUsername",
 		"password": "mdbPassword",
