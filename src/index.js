@@ -14,7 +14,7 @@
     // Connect to database
     await db.connect();
 
-    app = express();
+    let app = express();
 
     // Middleware
 
@@ -117,6 +117,7 @@
             cert: fs.readFileSync(config.sslCertificatePath)
         };
         https.createServer(httpsOptions, app).listen(config.port);
+        http.createServer(express().use((req, res) => res.redirect(config.url))).listen(80);
     }
     else {
         http.createServer(app).listen(config.port);
