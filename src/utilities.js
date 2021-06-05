@@ -1,6 +1,114 @@
 const { categoriesSet, millisecondMap } = require('./constants');
 const { DateTime, Interval } = require('luxon');
 const _ = require("lodash");
+const { template } = require('lodash');
+
+const statusCodes = {
+    // Information Responses
+    continue: 100,
+    switchingProtocol: 101,
+    processing: 102,
+    earlyHints: 103,
+
+    // Successful Responses
+    ok: 200,
+    created: 201,
+    accepted: 202,
+    nonAuthoritativeInformation: 203,
+    noContent: 204,
+    resetContent: 205,
+    partialContent: 206,
+    multiStatus: 207,
+    alreadyReported: 208,
+    imUsed: 226,
+
+    // Redirection Messages
+    multipleChoice: 300,
+    movedPermanently: 301,
+    found: 302,
+    seeOther: 303,
+    notModified: 304,
+    temporaryRedirect: 307,
+    permanentRedirect: 308,
+
+    // Client Error Responses
+    badRequest: 400,
+    unauthorized: 401,
+    paymentRequired: 402,
+    forbidden: 403,
+    notFound: 404,
+    methodNotAllowed: 405,
+    notAcceptable: 406,
+    proxyAuthenticationRequired: 407,
+    requestTimeout: 408,
+    conflict: 409,
+    gone: 410,
+    lengthRequired: 411,
+    preconditionFailed: 412,
+    payloadTooLarge: 413,
+    uriTooLong: 414,
+    unsupportedMediaType: 415,
+    rangeNotSatisfiable: 416,
+    expectationFailed: 417,
+    teapot: 418,
+    misdirectedRequest: 421,
+    unprocessableEntity: 422,
+    locked: 423,
+    failedDependency: 424,
+    tooEarly: 425,
+    upgradeRequired: 426,
+    preconditionRequired: 428,
+    tooManyRequests: 429,
+    requestHeaderFieldsTooLarge: 431,
+    unavailableForLegalReasons: 451,
+
+    // Server Error Responses
+    InternalServerError: 500,
+    notImplemented: 501,
+    badGateway: 502,
+    serviceUnavailable: 503,
+    gatewayTimeout: 504,
+    httpVersionNotSupported: 505,
+    variantAlsoNegotiates: 506,
+    insufficientStorage: 507,
+    loopDetected: 508,
+    notExtended: 510,
+    networkAuthenticationRequired: 511
+};
+
+function authenticate(req, res) {
+    if (req.session && req.session.sessionID) {
+        let userID = await db.userIDfromSessionID(req.session.sessionID);
+        if (userID !== null) {
+            return userID;
+        }
+    }
+    res.status(statusCodes.unauthorized);
+    res.json({message: "You need to login."});
+}
+
+function objectMatchesTemplate(obj, template) {
+    for (let key in template) {
+        if (!(key in obj) || !(typeof template[key] === typeof obj[key])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function checkForClientError(req, res, expectedPathParams={}, expectedQueryParams={}, expectedHeaders={}, expectedBody={}) {
+    let message = "";
+
+    if (!objectMatchesTemplate(req.body, expectedPathParams)) message += `Invalid path parameters. Expected Format: ${JSON.stringify(expectedPathParams)}\n`;
+    if (!objectMatchesTemplate(req.query, expectedQueryParams)) message += `Invalid query parameters. Expected Format: ${JSON.stringify(expectedQueryParams)}\n`;
+    if (!objectMatchesTemplate(req.headers, expectedHeaders)) message += `Invalid header parameters. Expected Format: ${JSON.stringify(expectedHeaders)}\n`;
+    if (!objectMatchesTemplate(req.body, expectedBody)) message += `Invalid JSON body. Expected Format: ${JSON.stringify(expectedBody)}\n`;
+
+    if (message.length > 0) {
+        res.status(statusCodes.clientError);
+        res.json({message: message});
+    }
+}
 
 function invert(obj) {
     return _.invert(obj);
@@ -73,6 +181,8 @@ function localDate(utc) {
 }
 
 module.exports = {
+    statusCodes: statusCodes,
+    checkForClientError: checkForClientError,
     copyObject: copyObject,
     checkName: checkName,
     makeID: makeID,

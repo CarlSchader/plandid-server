@@ -2,6 +2,7 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const fs = require("fs");
 const db = require('../database');
+const {statusCodes, checkForClientError} = require("../utilities");
 
 const config = JSON.parse(fs.readFileSync("./config.json"));
 const emailConfig = config.emailConfig;
@@ -46,7 +47,7 @@ function emailString(key) {
           <p>
           Click this button to confirm account creation.
         </p>
-        <form action="${url}/publicPost/confirmAccount" method="get">
+        <form action="${url}/api/accounts" method="post">
             <input type="hidden" name="key" value="${key}" />
             <input type="submit" value="Confirm">
         </form>
@@ -55,8 +56,12 @@ function emailString(key) {
     `;
 }
 
-// email, password
-router.post("/signUp", async function(req, res) {
+// signUp
+router.put("/pending-accounts", async function(req, res) {
+    checkForClientError(req, res, expectedBody={email: "example@gmail.com", password: "example-password"});
+
+    let jsonBody = {message: ""};
+
     if (!await db.accountExists(req.body.email)) { // Email not in database.
         let validationRecord = await db.readEmailValidationRecordFromEmail(req.body.email);
         if (validationRecord !== null) { // Email validation already sent
@@ -64,51 +69,79 @@ router.post("/signUp", async function(req, res) {
         }
         let key = await db.createEmailValidationRecord(req.body.email, req.body.password);
         sendEmail(req.body.email, `Welcome to ${appName}`, emailString(key));
-        return res.json(0);
+        res.status(statusCodes.success);
+        jsonBody.message = "New email validation sent.";
     }
-    else { // 1: Email is already in database.
-        return res.json(1);
+    else { // Email is already in database.
+        res.status(statusCodes.success);
+        jsonBody.message = "Email is already being used.";
     }
+
+    res.json(jsonBody);
 });
 
-// email, password
-router.post("/login", async function(req, res) {
+// login
+router.put("/online-accounts", async function(req, res) {
+    checkForClientError(req, res, expectedBody={email: "example@gmail.com", password: "example-password"});
+
+    let jsonBody = {message: ""};
+
     let userData = await db.readUserDataRecord(req.body.email, req.body.password);
     if (userData !== null) {
         req.session.sessionID = await db.createOnlineRecord(userData.userID);
-        return res.json(0);
+        res.status(statusCodes.success);
+        jsonBody.message = "Login successful.";
     }
     else {
-        return res.json(1)
+        res.status(statusCodes.success);
+        jsonBody.message = "Login unsuccessful.";
     }
+
+    res.json(jsonBody);
 });
 
-// session.sessionID
-router.post("/isLoggedIn", async function(req, res) {
+// isLoggedIn
+router.get("/online-status", async function(req, res) {
+    let jsonBody = {message: "Not logged in.", online: false};
+    
     if (req.session && req.session.sessionID) {
         if (await db.isLoggedIn(req.session.sessionID)) {
-            res.json(true);
-            return;
+            jsonBody.message = "Logged in.";
+            jsonBody.online = true;
         }
     }
-    return res.json(false);
+    
+    res.status(statusCodes.success);
+    res.json(jsonBody);
 });
 
-// query.key
-router.get("/confirmAccount", async function(req, res) {
+// confirmAccount
+router.post("/accounts", async function(req, res) {
+    checkForClientError(req, res, expectedQueryParams={key: "random string"});
+
+    let jsonBody = {message: ""};
+
     let validationData = await db.readEmailValidationRecord(req.query.key);
     if (validationData !== null) {
-        await db.removeEmailValidationRecord(req.query.key);
-        let userID = await db.createAccount(validationData.email, validationData.password, freeTierName);
-        let sessionID = await db.createOnlineRecord(userID);
-        req.session.sessionID = sessionID;
-        req.session.save();
-        console.log(`Created new user: ${validationData.email}`);
-        return res.redirect("/Calendar")
+        if (await db.accountExists(validationData.email)) {
+            res.status(statusCodes.clientError);
+            jsonBody.message = "Account already exists.";
+        }
+        else {
+            await db.removeEmailValidationRecord(req.query.key);
+            let userID = await db.createAccount(validationData.email, validationData.password, freeTierName);
+            let sessionID = await db.createOnlineRecord(userID);
+            req.session.sessionID = sessionID;
+            req.session.save();
+            res.redirect(config.url);
+        }
     }
     else {
-        return res.json(1);
+        res.status(statusCodes.clientError);
+        jsonBody.message = "Email validation timed out.";
     }
+    
+    res.json(jsonBody);
 });
 
 module.exports = router;
