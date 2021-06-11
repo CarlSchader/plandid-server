@@ -1,39 +1,29 @@
-const express = require('express');
+const express = require("express");
+const {statusCodes, authorize} = require("../utilities");
+
 const router = express.Router();
 
-const config = JSON.parse(fs.readFileSync("./config.json"));
+router.use("/accounts", require("./resources/accounts"));
+router.use("/pending-accounts", require("./resources/pendingAccounts"));
+router.use("/online-accounts", require("./resources/onlineAccounts"));
+router.use('/schedules', require('./resources/schedules'));
+// router.use("/stripeRoutes", require("./resources/stripeRoutes"));
 
-// Public Methods
-app.use(require('./routes/public'));
-
-// Check Credentials via SessionID Cookie
-app.post('*', async function(req, res, next) {
-    if (req.session && req.session.sessionID) {
-        let userID = await db.userIDfromSessionID(req.session.sessionID);
-        if (userID !== null) {
-            let userData = await db.readUserDataRecordFromID(userID);
-            let scheduleName = userData.lastUsedSchedule;
-            if (await db.readScheduleRecord(userID, scheduleName) === null) {
-                scheduleName = (await db.readRandomScheduleRecord(userID)).scheduleName;
-                await db.changeUserDataLastUsedSchedule(userID, scheduleName);
-            }
-            req.body.userID = userID;
-            req.body.scheduleName = scheduleName;
-            req.body.tier = userData.tier;
-            return next();
-        }
+// Routes that use :schedule as a path parameter also have userId attached to req.
+router.use("/:schedule", async function(req, res, next) {
+    req.userId = authorize(req, res);
+    if ((await db.readScheduleRecord(userId, req.params.schedule)) === null) {
+        res.status(statusCodes.notFound);
+        req.json({message: `Couldn't find schedule by the name of ${req.params.schedule}`});
     }
-    return res.json(-1);
+    else {
+        next();
+    }
 });
 
-// Private Methods
-app.use("/online", require("./routes/online"));
-app.use("/userData", require("./routes/userData"));
-app.use('/schedule', require('./routes/schedule'));
-app.use('/people', require('./routes/people'));
-app.use("/events", require("./routes/events"));
-app.use("/categories", require("./routes/categories"));
-app.use('/plans', require('./routes/plans'));
-app.use("/stripeRoutes", require("./routes/stripeRoutes"));
+router.use("/:schedule/people", require("./resources/people"));
+router.use("/:schedule/events", require("./resources/events"));
+router.use("/:schedule/categories", require("./resources/categories"));
+router.use('/:schedule/plans', require('./resources/plans'));
 
 module.exports = router;

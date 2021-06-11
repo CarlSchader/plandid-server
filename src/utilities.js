@@ -1,7 +1,6 @@
 const { categoriesSet, millisecondMap } = require('./constants');
 const { DateTime, Interval } = require('luxon');
 const _ = require("lodash");
-const { template } = require('lodash');
 
 const statusCodes = {
     // Information Responses
@@ -76,7 +75,7 @@ const statusCodes = {
     networkAuthenticationRequired: 511
 };
 
-function authenticate(req, res) {
+function authorize(req, res) {
     if (req.session && req.session.sessionID) {
         let userID = await db.userIDfromSessionID(req.session.sessionID);
         if (userID !== null) {
@@ -84,7 +83,7 @@ function authenticate(req, res) {
         }
     }
     res.status(statusCodes.unauthorized);
-    res.json({message: "You need to login."});
+    res.json({message: "You need to be logged in."});
 }
 
 function objectMatchesTemplate(obj, template) {
@@ -96,17 +95,17 @@ function objectMatchesTemplate(obj, template) {
     return true;
 }
 
-function checkForClientError(req, res, expectedPathParams={}, expectedQueryParams={}, expectedHeaders={}, expectedBody={}) {
+function checkForClientError(req, res, expectedPathParams={}, expectedQueryParams={}, expectedHeaders={}, expectedBody={}, optionalBody=null) {
     let message = "";
 
-    if (!objectMatchesTemplate(req.body, expectedPathParams)) message += `Invalid path parameters. Expected Format: ${JSON.stringify(expectedPathParams)}\n`;
-    if (!objectMatchesTemplate(req.query, expectedQueryParams)) message += `Invalid query parameters. Expected Format: ${JSON.stringify(expectedQueryParams)}\n`;
-    if (!objectMatchesTemplate(req.headers, expectedHeaders)) message += `Invalid header parameters. Expected Format: ${JSON.stringify(expectedHeaders)}\n`;
-    if (!objectMatchesTemplate(req.body, expectedBody)) message += `Invalid JSON body. Expected Format: ${JSON.stringify(expectedBody)}\n`;
+    if (!objectMatchesTemplate(req.params, expectedPathParams)) message += `\nInvalid path parameters. Expected Format:\n${JSON.stringify(expectedPathParams)}\n`;
+    if (!objectMatchesTemplate(req.query, expectedQueryParams)) message += `\nInvalid query parameters. Expected Format:\n${JSON.stringify(expectedQueryParams)}\n`;
+    if (!objectMatchesTemplate(req.headers, expectedHeaders)) message += `\nInvalid header parameters. Expected Format:\n${JSON.stringify(expectedHeaders)}\n`;
+    if (!objectMatchesTemplate(req.body, expectedBody)) message += `\nInvalid JSON body. Expected Format:\n${JSON.stringify(expectedBody)}\n`;
 
     if (message.length > 0) {
-        res.status(statusCodes.clientError);
-        res.json({message: message});
+        res.status(statusCodes.badRequest);
+        res.json({message: optionalBody ? message + `\nOptional JSON body paramters:\n${JSON.stringify(expectedBody)}\n` : message});
     }
 }
 
@@ -182,6 +181,7 @@ function localDate(utc) {
 
 module.exports = {
     statusCodes: statusCodes,
+    authorize: authorize,
     checkForClientError: checkForClientError,
     copyObject: copyObject,
     checkName: checkName,

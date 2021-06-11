@@ -1,20 +1,22 @@
-const express = require('express');
-const fs = require("fs");
+const express = require("express");
 const db = require("../database");
+const {statusCodes, authorize, checkForClientError} = require("../utilities");
 
-const config = JSON.parse(fs.readFileSync("./config.json"));
+const config = JSON.parse(require("fs").readFileSync("./config.json"));
 
 const router = express.Router();
 
 const stripe = require('stripe')(config.stripe.privateKey);
 
-// upgradeTier
 router.post("/create-checkout-session", async (req, res) => {
-    if (req.body.tier === req.body.upgradeTier) {
+    const userId = authorize(req, res);
+    checkForClientError(req, res, expectedQueryParams={upgradeTier: "tier name"});
+
+    if ((await db.readUserDataRecordFromID(userId)).tier === req.params.upgradeTier) {
         return res.redirect("/Success");
     }
 
-    const priceId = config.stripe.priceKeys[req.body.upgradeTier];
+    const priceId = config.stripe.priceKeys[req.params.upgradeTier];
     // See https://stripe.com/docs/api/checkout/sessions/create
     // for additional parameters to pass.
     try {
@@ -32,23 +34,25 @@ router.post("/create-checkout-session", async (req, res) => {
             // is redirected to the success page.
             success_url: config.url + '/Success?session_id={CHECKOUT_SESSION_ID}',
             cancel_url: config.url + '/Subscription',
-            metadata: {tier: req.body.upgradeTier}
+            metadata: {tier: req.params.upgradeTier}
         }
-        let customerId = await db.readStripeCustomerID(req.body.userID);
+        let customerId = await db.readStripeCustomerID(userId);
         if (customerId) {
             options["customer"] = customerId;
         }
         else {
-            options["customer_email"] = (await db.readUserDataRecordFromID(req.body.userID)).email;
+            options["customer_email"] = (await db.readUserDataRecordFromID(userId)).email;
         }
         const session = await stripe.checkout.sessions.create(options);
   
+        res.status(statusCodes.ok);
         res.json({
+            message: "Created stripe checkout session.",
             sessionId: session.id,
         });
     } catch (e) {
         console.error(e)
-        res.status(400);
+        res.status(statusCodes.badRequest);
         return res.send({
             error: {
             message: e.message,

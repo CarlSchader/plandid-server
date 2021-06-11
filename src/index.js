@@ -7,12 +7,12 @@
     const bodyParser = require("body-parser");
     const cors = require('cors');
     const session = require('express-session');
-    const db = require('./database');
+    const {connectDatabase} = require('./database');
 
     const config = JSON.parse(fs.readFileSync("./config.json"));
 
     // Connect to database
-    await db.connect();
+    await connectDatabase();
 
     let app = express();
 
@@ -36,7 +36,7 @@
     app.use(cors(corsOptions));
     
     // Webhooks go here. (notice this is before bodyParser.)
-    app.use("/webhooks", require("./routes/webhooks"));
+    app.use("/webhooks", require("./resources/webhooks"));
     
     app.use(bodyParser.json());
     app.use(express.urlencoded({extended: false}));
@@ -62,15 +62,13 @@
     });
     /////
 
-    // CORS OPTIONS method
+    // cors OPTIONS method
     app.options('*', cors(corsOptions));
 
-    // Routes
-
-    // API Routes
+    // api Routes
     app.use("/api", require("./api.js"));
 
-    // All GET Routes are public
+    // GET routes that aren't in the api route
     app.get('/', function(req, res) {
         return res.sendFile(path.join(config.clientBuildPath, "index.html"));
     });

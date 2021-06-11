@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "sudo node src/index.js"
+    "start": "sudo node src/index.js",
+    "delete-database": "sudo node scripts/deleteDatabase.js",
+    "create-database": "sudo node scripts/createDatabase.js",
+    "renew-ssl-certificate": "certbot renew"
   },
   "repository": {
     "type": "git",
